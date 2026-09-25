@@ -1,0 +1,11 @@
+# Issues for Devin to remediate
+
+These three issues are filed on the fork [sruthikilari/superset](https://github.com/sruthikilari/superset), a fork of [apache/superset](https://github.com/apache/superset). Each is a small, contained change with the files, the proposed edit and acceptance criteria written out, so Devin can start without asking questions. Adding the `devin-remediate` label to an issue starts a run.
+
+| # | Issue | Kind | Change |
+|---|---|---|---|
+| [1](https://github.com/sruthikilari/superset/issues/1) | fix(utils): pass `usedforsecurity=False` to non-security md5 calls | Code quality / portability | Five `hashlib.md5` calls (in `superset/config.py`, `superset/utils/hashing.py`, `superset/utils/public_interfaces.py`, `superset/key_value/utils.py`) fail on FIPS-enabled Python. Pass `usedforsecurity=False` and drop the `# noqa: S324` comments |
+| [2](https://github.com/sruthikilari/superset/issues/2) | fix(config): don't ship default SMTP credentials; skip login unless the operator sets them | Security hardening | `superset/config.py` defaults `SMTP_USER` and `SMTP_PASSWORD` to `"superset"`, so a deployment that changes only `SMTP_HOST` sends that pair to the new server. Default both to `None` and make the email test set explicit values |
+| [3](https://github.com/sruthikilari/superset/issues/3) | fix(deps): bump js-yaml override floor to ^4.3.2 to fix CVE-2026-84375 | Dependency vulnerability | `js-yaml` 4.3.1 (high severity, CPU exhaustion) ships in the frontend bundle through `react-diff-viewer-continued`. Raise the override floor in `superset-frontend/package.json` and refresh the lockfile |
+
+The issues were chosen because each is a few lines, has a clear check (a grep, a lint rule, a test or `npm ls`), and is easy for a person to review. Issue 1 includes a step that asks Devin to search for more call sites than the issue lists, and issue 3 names a claim Devin should verify before editing.

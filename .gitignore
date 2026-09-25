@@ -1,0 +1,34 @@
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# SQLite: the database file itself is committed (data/remediations.db holds the runs);
+# only its transient journal files are ignored.
+*.db-wal
+*.db-shm
+
+# Run evidence and the test suite are kept local, not published.
+# (tests/docs/ includes raw Devin/GitHub API snapshots that can contain org IDs.)
+tests/
+pytest.ini
+requirements-dev.txt
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
