@@ -112,7 +112,7 @@ def _row(r: Dict[str, Any]) -> str:
     # Only a run Devin handed off has a time to handoff; failed rows also carry a stop time.
     to_done = fmt_duration(r["completed_at"] - r["created_at"]) if r.get("completed_at") and not failed else "-"
     tone = "bad" if failed else "ok" if r.get("completed_at") else "busy"
-    pr = safe_link(r.get("pr_url"), f"PR ({r.get('pr_state') or 'unknown'})") if r.get("pr_url") else "-"
+    pr = safe_link(r.get("pr_url"), "PR") if r.get("pr_url") else "-"
     issue = safe_link(r.get("issue_url"), f"#{r['issue_number']}")
     return (
         "<tr>"
@@ -131,7 +131,7 @@ def _row(r: Dict[str, Any]) -> str:
 # Page
 # --------------------------------------------------------------------------- #
 def render(m: Dict[str, Any], rows: List[Dict[str, Any]], *, repo: str, now: float) -> str:
-    acu_note = "" if m["acus"]["runs_reporting_nonzero"] else " ACUs are not shown: the API reported 0.0 for every run."
+    acu_note = "" if m["acus"]["runs_reporting_nonzero"] else " ACUs are not shown: the API reported 0.0 for every run, because this plan meters usage as a daily and weekly quota rather than in ACUs (ACUs apply to Enterprise plans)."
     tiles = (
         f'<div class="tile hero"><b>{pct(m["rate"])}</b><span>Success rate: {m["fixed"]} of {m["rated"]} rated runs</span></div>'
         f'<div class="tile"><b>{fmt_duration(m["seconds_to_pr"]["median"])}</b><span>Median to PR (n={m["seconds_to_pr"]["n"]})</span></div>'
@@ -162,6 +162,7 @@ def render(m: Dict[str, Any], rows: List[Dict[str, Any]], *, repo: str, now: flo
 
 <ul class="note">
 <li><b>Success rate</b> = runs where Devin reported <i>fixed</i>, out of finished runs, leaving out "no change needed" runs (for example an issue that already has an open PR) and runs still running. It is Devin's own report, not proof the fix is correct. Every PR needs human review.</li>
+<li>Merges are not tracked yet. When Devin finishes, the PR is handed off to a person, and the service stops following the run, so a later merge or close does not appear here. Check the PR on GitHub for its current state.</li>
 <li>No baseline exists for a human doing the same work, so no time or cost saving is claimed. Small sample: {m['total']} runs. Times are observed every 30 seconds.{escape(acu_note)}</li>
 </ul>
 </main></body></html>"""

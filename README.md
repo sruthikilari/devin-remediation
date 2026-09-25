@@ -150,7 +150,7 @@ The structured output holds `outcome` and `summary` (required), plus `files_chan
 - **Running now** and **failed** counts.
 - **An outcomes donut** (fixed, no change needed, other, failed).
 - **A table of runs** with the issue, Devin's status (with the outcome under it), timings, and links to the issue, the Devin session and the PR. A run that needs a person shows as `blocked`, or as `waiting_for_user` with no outcome.
-- **No cost or time saving is claimed.** There is no human baseline, and the API reported `0.0` ACUs for every run on this plan.
+- **No cost or time saving is claimed.** There is no human baseline, and ACUs are not shown: the API reported `0.0` for every run, because this plan meters usage as a daily and weekly quota rather than in ACUs (ACUs apply to Enterprise plans).
 - **Not tracked:** whether a reviewer accepted the PR. The service records Devin's report, not the reviewer's verdict, so read the PR's state on GitHub.
 
 ## 🔌 API
