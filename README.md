@@ -188,7 +188,7 @@ What makes Devin reliable here is the context and environment it is given, and a
 
 | Setting | Value | Why |
 |---|---|---|
-| `prompt` | Fixed process, constraints and PR format; the issue body sits between markers as data | The process is set; the engineering decisions stay with Devin |
+| `prompt` | Fixed process, constraints and PR format, plus the fork's setup skill (`@skills:superset-setup-and-test`); the issue body sits between markers as data | The process is set; the engineering decisions stay with Devin |
 | `repos` | `[TARGET_REPO]` | Selects the repository for the session. What limits where Devin can push is the GitHub app's installation, which covers [sruthikilari/superset](https://github.com/sruthikilari/superset) only, so a PR cannot go to `apache/superset` |
 | `max_acu_limit` | `MAX_ACU_LIMIT` (15) | A cap on spend per session |
 | `structured_output_schema` | `outcome`, `summary`, `files_changed`, `commands_run`, `not_run`, `claims_verified`, `open_questions`, `pr_url` | Machine-readable result; feeds the dashboard |
@@ -237,7 +237,7 @@ Ideas that make Devin more capable, connect it to more tools, or let the service
 
 | Idea | What it adds |
 |---|---|
-| **Skills and playbooks** | Repo-specific instructions Devin loads when relevant (for example how to set up this repo's frontend with `npx npm@11`, and its PR conventions), and a saved prompt per kind of fix. The session-create call accepts `playbook_id`, so the service can pick a playbook from the issue's labels and shrink the inline prompt to the issue itself. Devin's Knowledge feature is being migrated to Skills, so build on Skills first |
+| **Skills and playbooks** | Repo-specific instructions Devin loads when relevant, and a saved prompt per kind of fix. A first skill, `superset-setup-and-test` (setup steps, which checks to run, how to report them), is in the fork at `.agents/skills/`; Devin reads skills from the repo it clones, so it lives there, not here. The session prompt invokes it with `@skills:superset-setup-and-test`. The session-create call accepts `playbook_id`, so the service can pick a playbook from the issue's labels and shrink the inline prompt to the issue itself. Devin's Knowledge feature is being migrated to Skills, so build on Skills first |
 | **Follow-up messages** | Send Devin a message when CI fails or a reviewer comments, so it fixes its own PR instead of waiting for a person. The poller already sees the handoff where this would start |
 | **MCP integrations** | Install a connector from Devin's marketplace (Linear, Datadog and others) so Devin can read a Sentry error or a Datadog alert while investigating, update a Jira or Linear ticket when it opens the PR, or post run updates to a Teams channel |
 | **Other triggers** | Start a session from a Linear or Jira ticket, a Sentry issue, a Datadog monitor, or a GitHub Actions workflow on `push`, not only a label. Each source is a small adapter that builds the prompt and calls the same session-create function |
