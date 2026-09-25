@@ -57,5 +57,5 @@ Runs in one container (`docker compose up`). A public URL (ngrok) receives the G
 - **Devin's own statuses.** The run status is Devin's `status_detail` (`working`, `waiting_for_user`, `finished`, ...), stored as reported. `status` stays `running` through handoff, so the detail is the signal. The service adds only the outcome from the structured result, and one status of its own, `timed_out`.
 - **SQLite for state and history.** The poller reads its work from the database, so a restart resumes. The Devin API keeps sessions, so nothing is lost.
 - **Guards kept small.** One running run per issue, a usage cap per session (`MAX_ACU_LIMIT`), a one-hour age limit, and the fork as the only target so a PR never goes to upstream.
-- **Small, low-risk issues.** The three target issues are each a change of a few lines, so a human can review each PR quickly.
+- **Small, low-risk issues.** The four target issues are each a change of a few lines, so a human can review each PR quickly.
 - **No claim of savings.** There is no baseline and Devin reports 0.0 ACU usage, so the dashboard shows outcomes and timing only.

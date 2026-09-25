@@ -2,7 +2,7 @@
 
 Label a GitHub issue `devin-remediate` and a Devin session investigates it, fixes it, validates the fix and opens a pull request. This service starts the session, follows it to a conclusion and shows what happened on a dashboard. A human reviews every PR; nothing is merged automatically.
 
-It was built against [sruthikilari/superset](https://github.com/sruthikilari/superset), a fork of [apache/superset](https://github.com/apache/superset). Three real issues on that repo (a `md5` portability fix, default SMTP credentials, and a `js-yaml` dependency vulnerability) were filed for Devin to remediate through this automation. They are listed in [issues.md](issues.md).
+It was built against [sruthikilari/superset](https://github.com/sruthikilari/superset), a fork of [apache/superset](https://github.com/apache/superset). Four real issues on that repo (a `md5` portability fix, default SMTP credentials, a `js-yaml` dependency vulnerability, and a rate-limiting default) were filed for Devin to remediate through this automation. They are listed in [issues.md](issues.md).
 
 📚 **Contents:** [Why it matters](#-why-this-matters) · [End to end flow](#-end-to-end-flow) · [Architecture](#-architecture) · [Running this solution](#-running-this-solution) · [Status lifecycle](#-status-lifecycle) · [Dashboard](#-the-dashboard) · [API](#-api) · [Why Devin](#-why-devin-is-the-core-of-this-solution) · [Roadmap](#-full-automation-roadmap) · [Expansion](#-expansion-ideas) · [Layout](#-project-layout)
 
@@ -261,5 +261,5 @@ app/
 data/remediations.db  SQLite state
 Dockerfile, docker-compose.yml, requirements.txt, .env.example
 plan.md           short design summary
-issues.md         the three issues filed on the fork
+issues.md         the four issues filed on the fork
 ```
