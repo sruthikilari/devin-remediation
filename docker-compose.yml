@@ -4,6 +4,7 @@ services:
     env_file: .env                       # secrets come from your local .env, never from the image
     environment:
       DATABASE_PATH: /data/remediations.db
+      TZ: ${TZ:-UTC}                     # timezone for dashboard times and the daily throughput chart
     ports:
       - "8000:8000"
     volumes:

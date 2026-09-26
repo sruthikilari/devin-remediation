@@ -9,10 +9,13 @@ runs and no human baseline they would be misleading.
 
 from __future__ import annotations
 
+import time
+from datetime import datetime, timedelta
 from statistics import median
 from typing import Any, Dict, Iterable, List, Optional
 
 from app.status import FAILED
+
 
 
 def _stats(values: List[float]) -> Dict[str, Optional[float]]:
@@ -21,7 +24,24 @@ def _stats(values: List[float]) -> Dict[str, Optional[float]]:
     return {"n": len(values), "min": min(values), "median": median(values), "max": max(values)}
 
 
-def compute(rows: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
+def _per_day(rows: List[Dict[str, Any]], now: float, days: int = 7) -> List[Dict[str, Any]]:
+    """Runs started and PRs opened per calendar day for the last ``days`` days, oldest first.
+
+    Days are in the server's timezone (set ``TZ``), the same way a dashboard viewer's own
+    clock would bucket them.
+    """
+    today = datetime.fromtimestamp(now).date()
+    counts = {today - timedelta(days=i): {"day": (today - timedelta(days=i)).strftime("%b %d"), "started": 0, "prs": 0}
+              for i in range(days - 1, -1, -1)}
+    for r in rows:
+        for key, ts in (("started", r.get("created_at")), ("prs", r.get("pr_opened_at"))):
+            day = datetime.fromtimestamp(ts).date() if ts else None
+            if day in counts:
+                counts[day][key] += 1
+    return list(counts.values())
+
+
+def compute(rows: Iterable[Dict[str, Any]], now: Optional[float] = None) -> Dict[str, Any]:
     rows = list(rows)
     stopped_rows = [r for r in rows if r.get("completed_at")]      # Devin handed off or failed
     failed = [r for r in stopped_rows if r["devin_status"] in FAILED]
@@ -39,5 +59,6 @@ def compute(rows: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
         "rated": rated, "rate": (fixed / rated) if rated else None,
         "seconds_to_pr": _stats([r["pr_opened_at"] - r["created_at"] for r in rows if r.get("pr_opened_at")]),
         "seconds_to_handoff": _stats([r["completed_at"] - r["created_at"] for r in handed_off]),
+        "per_day": _per_day(rows, time.time() if now is None else now),
         "acus": {"total": sum(acus), "runs_reporting_nonzero": sum(1 for a in acus if a)},
     }

@@ -43,6 +43,8 @@ th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);verti
 th{font-size:12px;color:var(--muted);font-weight:600}tr:last-child td{border-bottom:0}
 .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid currentColor}
 .ok{color:var(--ok)}.bad{color:var(--bad)}.busy{color:var(--info)}
+.bars{width:100%;max-width:420px;height:auto}.bars .c-info{fill:var(--info)}.bars .c-ok{fill:var(--ok)}
+.bars text{fill:var(--muted);font-size:7px;text-anchor:middle}.bars .axis{font-size:6.5px}
 .scroll{overflow-x:auto}.note{color:var(--muted);font-size:12px;margin-top:22px;padding-left:18px}.note li{margin:2px 0}
 """
 
@@ -130,6 +132,24 @@ def _row(r: Dict[str, Any]) -> str:
 # --------------------------------------------------------------------------- #
 # Page
 # --------------------------------------------------------------------------- #
+def throughput(per_day: Sequence[Dict[str, Any]]) -> str:
+    """Grouped bars of runs started and PRs opened per day, as inline SVG."""
+    peak = max([1] + [day[k] for day in per_day for k in ("started", "prs")])
+    parts: List[str] = []
+    for i, day in enumerate(per_day):
+        x = 8 + i * 42
+        for j, (key, cls, label) in enumerate((("started", "c-info", "runs started"), ("prs", "c-ok", "PRs opened"))):
+            h = day[key] / peak * 60
+            parts.append(f'<rect class="{cls}" x="{x + j * 16}" y="{72 - h:.1f}" width="14" height="{h:.1f}" rx="2">'
+                         f'<title>{escape(day["day"])}: {day[key]} {label}</title></rect>')
+            if day[key]:
+                parts.append(f'<text x="{x + j * 16 + 7}" y="{70 - h:.1f}">{day[key]}</text>')
+        parts.append(f'<text class="axis" x="{x + 15}" y="83">{escape(day["day"])}</text>')
+    legend = ('<ul class="legend"><li><span class="dot c-info"></span>Runs started</li>'
+              '<li><span class="dot c-ok"></span>PRs opened</li></ul>')
+    return f'<svg class="bars" viewBox="0 0 300 88" role="img" aria-label="Runs per day">{"".join(parts)}</svg>{legend}'
+
+
 def render(m: Dict[str, Any], rows: List[Dict[str, Any]], *, repo: str, now: float) -> str:
     acu_note = "" if m["acus"]["runs_reporting_nonzero"] else " ACUs are not shown: the API reported 0.0 for every run, because this plan meters usage as a daily and weekly quota rather than in ACUs (ACUs apply to Enterprise plans)."
     tiles = (
@@ -152,8 +172,11 @@ def render(m: Dict[str, Any], rows: List[Dict[str, Any]], *, repo: str, now: flo
 <p class="sub">{escape(repo)} &middot; {m['total']} runs &middot; updated {fmt_time(now)}</p>
 <div class="tiles">{tiles}</div>
 
-<h2>Outcomes</h2>
-<div class="card" style="max-width:420px">{outcomes}</div>
+<h2>Outcomes and throughput</h2>
+<div class="charts">
+<div class="card"><h3>Outcomes</h3>{outcomes}</div>
+<div class="card"><h3>Last 7 days</h3>{throughput(m["per_day"])}</div>
+</div>
 
 <h2>Runs</h2>
 <div class="scroll"><table><thead><tr>

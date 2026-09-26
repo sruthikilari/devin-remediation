@@ -121,11 +121,11 @@ def create_app(devin: Optional[DevinClient] = None, db: Optional[Database] = Non
     @app.get("/dashboard", response_class=HTMLResponse)
     async def dashboard() -> HTMLResponse:
         rows = await run_in_threadpool(db.list_all, 10000)
-        return HTMLResponse(render_dashboard(compute_metrics(rows), rows[:200], repo=repo, now=db.now()))
+        return HTMLResponse(render_dashboard(compute_metrics(rows, db.now()), rows[:200], repo=repo, now=db.now()))
 
     @app.get("/metrics")
     async def metrics() -> Dict[str, Any]:
-        return compute_metrics(await run_in_threadpool(db.list_all, 10000))
+        return compute_metrics(await run_in_threadpool(db.list_all, 10000), db.now())
 
     @app.get("/remediations")
     async def remediations() -> Dict[str, Any]:

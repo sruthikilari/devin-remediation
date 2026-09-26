@@ -10,7 +10,7 @@ It was built against [sruthikilari/superset](https://github.com/sruthikilari/sup
 
 ⏳ **The problem.** Small fixes like a dependency advisory or an insecure default often pile up as tech debt that never gets prioritized, but still matters for security and maintenance. This system hands each one to Devin, which investigates it and opens a reviewable PR without waiting on anyone's backlog.
 
-🤖 **Why Devin and not a script.** A script can make the edit it was written for, but a safe fix takes judgment: the issue has to be checked against the code, every affected site found, and the right checks run. Devin does that work itself. It verifies the issue's claims, finds sites the issue missed, notices when the issue contradicts the repository, chooses the smallest change, runs the build, tests and lint, and reports the checks that failed or could not run instead of hiding them.
+🤖 **Why Devin?** A script can make the edit it was written for, but a safe fix takes judgment: the issue has to be checked against the code, every affected site found, and the right checks run. Devin does that work itself. It verifies the issue's claims, finds sites the issue missed, notices when the issue contradicts the repository, chooses the smallest change, runs the build, tests and lint, and reports the checks that failed or could not run instead of hiding them.
 
 ## 🔄 End to end flow
 
@@ -24,21 +24,51 @@ It was built against [sruthikilari/superset](https://github.com/sruthikilari/sup
 ## 🧩 Architecture
 
 ```
-GitHub issue labeled `devin-remediate`
-        │  webhook (issues / labeled)
-        ▼
-┌──────────────────────── this service (FastAPI + SQLite, one container) ───────────────────────┐
-│                                                                                              │
-│  POST /webhook ─► gate ─► one active run per issue? ─► create Devin session ─► save run     │
-│                                                                                              │
-│  poller (30 s): read session ─► derive state ─► save status, PR, structured result           │
-│                                                                                              │
-│  GET /dashboard   /metrics   /remediations   /remediations/{id}/events   /healthz            │
-└──────────────────────────────────────────────────────────────────────────────────────────────┘
-        │ create session, poll (Devin API v3)              ▲
-        ▼                                                  │ opens PR, comments on the issue
-   Devin session ─────────────────────────────────────────►  GitHub fork
+┌─────────────────────────────────────┐
+│ GitHub issue                        │
+│ labeled `devin-remediate`           │
+└──────────────────┬──────────────────┘
+                   │ webhook (issues / labeled), via a persistent ngrok tunnel
+                   ▼
+┌─────────────────────────────────────┐
+│ FastAPI service (Docker)            │
+│ POST /webhook                       │
+│ • filters the event                 │
+│ • skips duplicate runs              │
+│ • creates the Devin session         │
+└──────────────────┬──────────────────┘
+                   │ Devin API v3: create session
+                   ▼
+┌─────────────────────────────────────┐
+│ Devin session (its own VM)          │
+│ 1. reads the issue and the repo     │
+│ 2. investigates, makes the change   │
+│ 3. runs the checks                  │
+│ 4. opens the PR, comments once      ├──► GitHub fork: PR + one issue comment
+└──────────────────┬──────────────────┘
+                   │ session status, PR, result (polled every 30 s)
+                   ▼
+┌─────────────────────────────────────┐
+│ Poller                              │
+│ reads the session and stores        │
+│ what Devin reports                  │
+└──────────────────┬──────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────┐
+│ SQLite                              │
+│ runs and status changes             │
+└──────────────────┬──────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────┐
+│ Dashboard and JSON API              │
+│ GET /dashboard  /metrics            │
+│ GET /remediations  /healthz         │
+└─────────────────────────────────────┘
 ```
+
+The service never writes to GitHub: Devin opens the PR and posts the issue comment itself. Everything the service records comes from what Devin reports about the session.
 
 ## 🚀 Running this solution
 
@@ -149,6 +179,7 @@ The structured output holds `outcome` and `summary` (required), plus `files_chan
 - **Median time to PR** and **median time to handoff.**
 - **Running now** and **failed** counts.
 - **An outcomes donut** (fixed, no change needed, other, failed).
+- **Throughput over time:** a bar chart of the last 7 days, with runs started and PRs opened per day, in the server's timezone (set `TZ` in `.env`; the default is UTC). `/metrics` returns the same counts as `per_day`.
 - **A table of runs** with the issue, Devin's status (with the outcome under it), timings, and links to the issue, the Devin session and the PR. A run that needs a person shows as `blocked`, or as `waiting_for_user` with no outcome.
 - **No cost or time saving is claimed.** There is no human baseline, and ACUs are not shown: the API reported `0.0` for every run, because this plan meters usage as a daily and weekly quota rather than in ACUs (ACUs apply to Enterprise plans).
 - **Not tracked:** whether a reviewer accepted the PR. The service records Devin's report, not the reviewer's verdict, so read the PR's state on GitHub.
